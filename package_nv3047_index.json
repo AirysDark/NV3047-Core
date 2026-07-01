@@ -14,10 +14,8 @@
           "architecture": "esp32",
           "version": "2.0.17",
           "category": "Contributed",
-          "url": "https://github.com",
-          "archiveFileName": "esp32-2.0.17.zip",
-          "checksum": "SHA-256:d8ba39a7b7a63ce73e8e19d7dbe31a23806be753d0ab7515f400df3fbe65ea9b",
-          "size": 253163350,
+          "url": "https://github.com/AirysDark/NV3047-Core/archive/refs/tags/1.0.0.zip",
+          "archiveFileName": "1.0.0.zip",
           "boards": [
             {"name": "NV3047 High-Priority HMI Board"}
           ],
