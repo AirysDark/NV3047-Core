@@ -1,0 +1,39 @@
+{
+  "packages": [
+    {
+      "name": "NV3047-Core",
+      "maintainer": "AirysDark",
+      "websiteURL": "https://github.com",
+      "email": "support@nv3047.local",
+      "help": {
+        "online": "https://github.com"
+      },
+      "platforms": [
+        {
+          "name": "NV3047 ESP32 Boards (Gated Core)",
+          "architecture": "esp32",
+          "version": "2.0.17",
+          "category": "Contributed",
+          "url": "https://github.com",
+          "archiveFileName": "esp32-2.0.17.zip",
+          "checksum": "SHA-256:d8ba39a7b7a63ce73e8e19d7dbe31a23806be753d0ab7515f400df3fbe65ea9b",
+          "size": 253163350,
+          "boards": [
+            {"name": "NV3047 High-Priority HMI Board"}
+          ],
+          "toolsDependencies": [
+            {"packager": "esp32", "name": "xtensa-esp32-elf-gcc", "version": "esp-2021r2-patch5-8.4.0"},
+            {"packager": "esp32", "name": "xtensa-esp32s2-elf-gcc", "version": "esp-2021r2-patch5-8.4.0"},
+            {"packager": "esp32", "name": "xtensa-esp32s3-elf-gcc", "version": "esp-2021r2-patch5-8.4.0"},
+            {"packager": "esp32", "name": "riscv32-esp-elf-gcc", "version": "esp-2021r2-patch5-8.4.0"},
+            {"packager": "esp32", "name": "esptool_py", "version": "4.5.1"},
+            {"packager": "esp32", "name": "openocd-esp32", "version": "v0.12.0-esp32-20230921"},
+            {"packager": "esp32", "name": "mkspiffs", "version": "0.2.3-arduino-esp32"},
+            {"packager": "esp32", "name": "mklittlefs", "version": "3.0.0-gnu12-3019771"}
+          ]
+        }
+      ],
+      "tools": []
+    }
+  ]
+}

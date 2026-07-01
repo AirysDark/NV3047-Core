@@ -1,0 +1,227 @@
+# Official Espressif options
+menu.UploadSpeed=Upload Speed
+menu.USBMode=USB Mode
+menu.CDCOnBoot=USB CDC On Boot
+menu.MSCOnBoot=USB Firmware MSC On Boot
+menu.DFUOnBoot=USB DFU On Boot
+menu.UploadMode=Upload Mode
+menu.CPUFreq=CPU Frequency
+menu.FlashFreq=Flash Frequency
+menu.FlashMode=Flash Mode
+menu.FlashSize=Flash Size
+menu.PartitionScheme=Partition Scheme
+menu.DebugLevel=Core Debug Level
+menu.PSRAM=PSRAM
+menu.LoopCore=Arduino Runs On
+menu.EventsCore=Events Run On
+menu.MemoryType=Memory Type
+menu.EraseFlash=Erase All Flash Before Sketch Upload
+menu.JTAGAdapter=JTAG Adapter
+menu.PinNumbers=Pin Numbering
+
+# Custom options
+menu.Revision=Board Revision
+menu.LORAWAN_REGION=LoRaWan Region
+menu.LoRaWanDebugLevel=LoRaWan Debug Level
+menu.LORAWAN_DEVEUI=LoRaWan DevEUI
+menu.LORAWAN_PREAMBLE_LENGTH=LoRaWan Preamble Length
+
+##############################################################
+### DO NOT PUT BOARDS ABOVE THE OFFICIAL ESPRESSIF BOARDS! ###
+##############################################################
+
+# =========================================================================
+#   THE NV3047 HIGH-PRIORITY HARDWARE DEVELOPMENT PLATFORM
+# =========================================================================
+nv3047.name=NV3047 High-Priority HMI Board
+nv3047.vid.0=0x303a
+nv3047.pid.0=0x1001
+
+nv3047.bootloader.tool=esptool_py
+nv3047.bootloader.tool.default=esptool_py
+
+nv3047.upload.tool=esptool_py
+nv3047.upload.tool.default=esptool_py
+nv3047.upload.tool.network=esp_ota
+
+# Formatted storage bounds for your Huge APP memory profiles
+nv3047.upload.maximum_size=3145728
+nv3047.upload.maximum_data_size=327680
+nv3047.upload.flags=
+nv3047.upload.extra_flags=
+nv3047.upload.use_1200bps_touch=false
+nv3047.upload.wait_for_upload_port=false
+
+nv3047.serial.disableDTR=false
+nv3047.serial.disableRTS=false
+
+# FIXED RECOVERY HOOKS: Forcefully tells the Arduino core package layout 
+# that this board architecture maps exactly to the esp32 variant family tools!
+nv3047.build.tarch=xtensa
+nv3047.build.bootloader_addr=0x0
+nv3047.build.target=esp32s3
+nv3047.build.mcu=esp32s3
+nv3047.build.core=esp32
+nv3047.build.variant=esp32s3
+nv3047.build.board=ESP32S3_DEV
+
+nv3047.build.usb_mode=1
+nv3047.build.cdc_on_boot=0
+nv3047.build.msc_on_boot=0
+nv3047.build.dfu_on_boot=0
+nv3047.build.f_cpu=240000000L
+nv3047.build.flash_size=4MB
+nv3047.build.flash_freq=80m
+nv3047.build.flash_mode=dio
+nv3047.build.boot=qio
+nv3047.build.boot_freq=80m
+nv3047.build.partitions=huge_app
+nv3047.build.loop_core=
+nv3047.build.event_core=
+nv3047.build.psram_type=qspi
+nv3047.build.memory_type={build.boot}_{build.psram_type}
+
+# HARDWARE ALLOCATION HACKS: Force internal RAM interrupt execution constraints!
+nv3047.build.extra_flags=-DARDUINO_USB_CDC_ON_BOOT=1 -DCONFIG_SPI_MASTER_ISR_IN_IRAM=1
+
+# =========================================================================
+#   THE MISSING GLOBAL MENU HOOKS (CRITICAL IDE INTERFACE LOCK)
+# =========================================================================
+nv3047.menu.PSRAM=PSRAM
+nv3047.menu.FlashMode=Flash Mode
+nv3047.menu.FlashSize=Flash Size
+nv3047.menu.PartitionScheme=Partition Scheme
+nv3047.menu.LoopCore=Arduino Runs On
+nv3047.menu.EventsCore=Events Run On
+nv3047.menu.USBMode=USB Mode
+nv3047.menu.CDCOnBoot=USB CDC On Boot
+nv3047.menu.MSCOnBoot=USB MSC On Boot
+nv3047.menu.DFUOnBoot=USB DFU On Boot
+nv3047.menu.JTAGAdapter=JTAG Adapter
+nv3047.menu.Revision=Board Revision
+nv3047.menu.LORAWAN_REGION=LoRaWan Region
+nv3047.menu.LoRaWanDebugLevel=LoRaWan Debug Level
+nv3047.menu.LORAWAN_DEVEUI=LoRaWan DevEUI
+nv3047.menu.LORAWAN_PREAMBLE_LENGTH=LoRaWan Preamble Length
+
+# =========================================================================
+#   DROPDOWN VALUE DEFINITIONS AND COMPILER OVERRIDES
+# =========================================================================
+
+# 1. JTAG Adapter
+nv3047.menu.JTAGAdapter.default=Disabled
+nv3047.menu.JTAGAdapter.default.build.copy_jtag_files=0
+nv3047.menu.JTAGAdapter.builtin=Integrated USB JTAG
+nv3047.menu.JTAGAdapter.builtin.build.openocdscript=esp32s3-builtin.cfg
+nv3047.menu.JTAGAdapter.builtin.build.copy_jtag_files=1
+
+# 2. PSRAM Memory Allocation (Configured to your working QSPI setup baseline)
+nv3047.menu.PSRAM.disabled=Disabled
+nv3047.menu.PSRAM.disabled.build.defines=
+nv3047.menu.PSRAM.disabled.build.psram_type=qspi
+nv3047.menu.PSRAM.enabled=QSPI PSRAM (4MB Active Layout)
+nv3047.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
+nv3047.menu.PSRAM.enabled.build.psram_type=qspi
+nv3047.menu.PSRAM.opi=OPI PSRAM (8MB Fallback Option)
+nv3047.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+nv3047.menu.PSRAM.opi.build.psram_type=opi
+
+# 3. Flash Mode Speed Alignment (Configured to your target QIO 80MHz baseline parameters)
+nv3047.menu.FlashMode.qio=QIO 80MHz (Stabilized Target)
+nv3047.menu.FlashMode.qio.build.flash_mode=dio
+nv3047.menu.FlashMode.qio.build.boot=qio
+nv3047.menu.FlashMode.qio.build.boot_freq=80m
+nv3047.menu.FlashMode.qio.build.flash_freq=80m
+nv3047.menu.FlashMode.dio=DIO 80MHz Standard
+nv3047.menu.FlashMode.dio.build.flash_mode=dio
+nv3047.menu.FlashMode.dio.build.boot=dio
+nv3047.menu.FlashMode.dio.build.boot_freq=80m
+nv3047.menu.FlashMode.dio.build.flash_freq=80m
+
+# 4. Flash Size Boundary Specification
+nv3047.menu.FlashSize.4M=4MB (32Mb Base Configuration)
+nv3047.menu.FlashSize.4M.build.flash_size=4MB
+nv3047.menu.FlashSize.8M=8MB (64Mb Layout Variant)
+nv3047.menu.FlashSize.8M.build.flash_size=8MB
+nv3047.menu.FlashSize.8M.build.partitions=default_8MB
+nv3047.menu.FlashSize.16M=16MB (128Mb)
+nv3047.menu.FlashSize.16M.build.flash_size=16MB
+
+# 5. Partition Table Allocation Layout (Configured to Huge APP 3MB target)
+nv3047.menu.PartitionScheme.huge_app=Huge APP (3MB No OTA / 1MB SPIFFS)
+nv3047.menu.PartitionScheme.huge_app.build.partitions=huge_app
+nv3047.menu.PartitionScheme.default=Default (2MB with OTA)
+nv3047.menu.PartitionScheme.default.build.partitions=default
+
+# 6. Core Execution Thread Assignment Loops
+nv3047.menu.LoopCore.1=Core 1 (Application Matrix)
+nv3047.menu.LoopCore.1.build.loop_core=-DARDUINO_RUNNING_CORE=1
+nv3047.menu.LoopCore.0=Core 0 (Display Engine Split)
+nv3047.menu.LoopCore.0.build.loop_core=-DARDUINO_RUNNING_CORE=0
+
+nv3047.menu.EventsCore.1=Core 1
+nv3047.menu.EventsCore.1.build.event_core=-DARDUINO_EVENT_RUNNING_CORE=1
+nv3047.menu.EventsCore.0=Core 0
+nv3047.menu.EventsCore.0.build.event_core=-DARDUINO_EVENT_RUNNING_CORE=0
+
+# 7. USB Mode Parameters
+nv3047.menu.USBMode.hwcdc=Hardware CDC and JTAG
+nv3047.menu.USBMode.hwcdc.build.usb_mode=1
+nv3047.menu.USBMode.default=USB-OTG (TinyUSB)
+nv3047.menu.USBMode.default.build.usb_mode=0
+
+# 8. USB Serial Logging Engine
+nv3047.menu.CDCOnBoot.default=Disabled
+nv3047.menu.CDCOnBoot.default.build.cdc_on_boot=0
+nv3047.menu.CDCOnBoot.cdc=Enabled On Boot
+nv3047.menu.CDCOnBoot.cdc.build.cdc_on_boot=1
+
+# 9. USB MSC On Boot
+nv3047.menu.MSCOnBoot.default=Disabled
+nv3047.menu.MSCOnBoot.default.build.msc_on_boot=0
+nv3047.menu.MSCOnBoot.msc=Enabled (Requires USB-OTG Mode)
+nv3047.menu.MSCOnBoot.msc.build.msc_on_boot=1
+
+# 10. USB DFU On Boot
+nv3047.menu.DFUOnBoot.default=Disabled
+nv3047.menu.DFUOnBoot.default.build.dfu_on_boot=0
+nv3047.menu.DFUOnBoot.dfu=Enabled (Requires USB-OTG Mode)
+nv3047.menu.DFUOnBoot.dfu.build.dfu_on_boot=1
+
+# 11. Board Revision Selector
+nv3047.menu.Revision.v21=V 2.1 (Stamping On Back of Board)
+nv3047.menu.Revision.v21.build.board_rev=21
+nv3047.menu.Revision.v10=v1.0 (Legacy Product Layer)
+nv3047.menu.Revision.v10.build.board_rev=10
+
+# 12. LoRaWan Frequency Geometry Region
+nv3047.menu.LORAWAN_REGION.EU868=EU868 (Europe Frame Profile)
+nv3047.menu.LORAWAN_REGION.EU868.build.lorawan_region=0
+nv3047.menu.LORAWAN_REGION.US915=US915 (North America Profile)
+nv3047.menu.LORAWAN_REGION.US915.build.lorawan_region=1
+nv3047.menu.LORAWAN_REGION.AU915=AU915 (Australia Profile)
+nv3047.menu.LORAWAN_REGION.AU915.build.lorawan_region=2
+
+# 13. LoRaWan Diagnostic Debugging Traffic Level
+nv3047.menu.LoRaWanDebugLevel.none=Disabled
+nv3047.menu.LoRaWanDebugLevel.none.build.lorawan_debug=0
+nv3047.menu.LoRaWanDebugLevel.basic=Basic Stack Statistics
+nv3047.menu.LoRaWanDebugLevel.basic.build.lorawan_debug=1
+nv3047.menu.LoRaWanDebugLevel.verbose=Deep Hardware Traffic Logging
+nv3047.menu.LoRaWanDebugLevel.verbose.build.lorawan_debug=2
+
+# 14. LoRaWan DevEUI
+nv3047.menu.LORAWAN_DEVEUI.custom=Sourced from Board Chip ID
+nv3047.menu.LORAWAN_DEVEUI.custom.build.lorawan_deveui=1
+nv3047.menu.LORAWAN_DEVEUI.factory=Factory Fixed Matrix Layout
+nv3047.menu.LORAWAN_DEVEUI.factory.build.lorawan_deveui=0
+
+# 15. LoRaWan Preamble Length
+nv3047.menu.LORAWAN_PREAMBLE_LENGTH.8=8 Symbol Windows (Standard)
+nv3047.menu.LORAWAN_PREAMBLE_LENGTH.8.build.lorawan_preamble=8
+nv3047.menu.LORAWAN_PREAMBLE_LENGTH.16=16 Symbol Windows (Long Range)
+nv3047.menu.LORAWAN_PREAMBLE_LENGTH.16.build.lorawan_preamble=16
+# =========================================================================
+
+
+##############################################################
