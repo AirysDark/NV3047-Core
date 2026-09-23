@@ -1,0 +1,76 @@
+name: Build NV3047-Core Release
+
+on:
+  push:
+    branches:
+      - "release/*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#release/}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "release branch must be named release/X.Y.Z" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "archive=nv3047-core-$VERSION.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Build platform archive and final package index
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ARCHIVE: ${{ steps.version.outputs.archive }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+
+          git archive             --format=zip             --prefix="NV3047-Core-$VERSION/"             -o "dist/$ARCHIVE"             HEAD
+
+          python3 scripts/generate_package_index.py             --archive "dist/$ARCHIVE"             --version "$VERSION"             --url "https://github.com/AirysDark/NV3047-Core/releases/download/$TAG/$ARCHIVE"             --output "dist/package_nv3047_index.json"
+
+          python3 -m json.tool dist/package_nv3047_index.json >/dev/null
+          sha256sum "dist/$ARCHIVE"
+          stat --printf='%s bytes\n' "dist/$ARCHIVE"
+
+      - name: Create prerelease and upload deterministic assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          ARCHIVE: ${{ steps.version.outputs.archive }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refusing to overwrite." >&2
+            exit 1
+          fi
+
+          gh release create "$TAG"             "dist/$ARCHIVE"             "dist/package_nv3047_index.json"             --target "$GITHUB_SHA"             --title "NV3047-Core $VERSION"             --prerelease             --notes "NV3047-Core recovery baseline based on Arduino-ESP32 2.0.17. This prerelease has passed clean Arduino CLI and Board Manager install/compile CI. Physical NV3047 panel validation is still required before stable release."
+
+      - name: Show permanent Board Manager URL for this prerelease
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          echo "https://github.com/AirysDark/NV3047-Core/releases/download/$TAG/package_nv3047_index.json"
