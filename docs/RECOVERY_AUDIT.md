@@ -168,9 +168,9 @@ The platform already owns the normal `build.extra_flags` composition for:
 - board defines;
 - target-specific USB flags.
 
-A board-specific replacement of that entire property could discard parts of the normal composition. It also forced CDC-on-boot to 1 while the board default said 0.
+A board-specific replacement of that entire property could discard parts of the normal composition. It also forced CDC-on-boot to 1 while the visible board property said 0. That accidental force explains why existing hardware tests could use `Serial0`: Arduino-ESP32 2.0.17 declares `Serial0` when USB CDC-on-boot is enabled, while CDC-disabled builds expose UART0 as `Serial`.
 
-The recovery branch removes that override and uses the normal platform mechanism.
+The recovery branch removes the whole `build.extra_flags` override, sets CDC-on-boot to 1 explicitly as the baseline, and uses the normal platform target-specific USB flag mechanism.
 
 ## platform.txt customization
 

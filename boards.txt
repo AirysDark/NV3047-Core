@@ -59,7 +59,7 @@ nv3047.build.board=NV3047
 
 # Stable baseline defaults.
 nv3047.build.usb_mode=1
-nv3047.build.cdc_on_boot=0
+nv3047.build.cdc_on_boot=1
 nv3047.build.msc_on_boot=0
 nv3047.build.dfu_on_boot=0
 nv3047.build.f_cpu=240000000L
@@ -175,10 +175,10 @@ nv3047.menu.USBMode.hwcdc.build.usb_mode=1
 nv3047.menu.USBMode.default=USB-OTG (TinyUSB)
 nv3047.menu.USBMode.default.build.usb_mode=0
 
-nv3047.menu.CDCOnBoot.default=Disabled
-nv3047.menu.CDCOnBoot.default.build.cdc_on_boot=0
-nv3047.menu.CDCOnBoot.cdc=Enabled On Boot
+nv3047.menu.CDCOnBoot.cdc=Enabled On Boot (Serial0 on UART0)
 nv3047.menu.CDCOnBoot.cdc.build.cdc_on_boot=1
+nv3047.menu.CDCOnBoot.disabled=Disabled (UART0 is Serial)
+nv3047.menu.CDCOnBoot.disabled.build.cdc_on_boot=0
 
 nv3047.menu.MSCOnBoot.default=Disabled
 nv3047.menu.MSCOnBoot.default.build.msc_on_boot=0

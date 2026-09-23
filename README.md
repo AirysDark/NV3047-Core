@@ -65,7 +65,7 @@ The 8 MB/16 MB flash and OPI PSRAM menu entries are hardware options and must be
 | TX | 43 |
 | RX | 44 |
 
-The verified debug path is `Serial0` at 115200 baud using RX 44 / TX 43.
+The verified debug path is `Serial0` at 115200 baud using RX 44 / TX 43. The recovery board deliberately enables USB CDC-on-boot by default because Arduino-ESP32 2.0.17 only declares the separate `Serial0` hardware-UART object in that configuration; disabling CDC-on-boot makes UART0 the global `Serial` object instead.
 
 ### Shared SPI area
 
@@ -145,7 +145,7 @@ The stable baseline is intentionally conservative. Aggressive compiler or SDK op
 
 ## USB
 
-The baseline uses the ESP32-S3 native hardware CDC/JTAG mode with CDC-on-boot disabled.
+The baseline uses the ESP32-S3 native hardware CDC/JTAG mode with CDC-on-boot enabled. In Arduino-ESP32 2.0.17 this keeps `Serial` on USB CDC and exposes the verified hardware UART0 path as `Serial0` on RX44/TX43.
 
 TinyUSB/USB-OTG, MSC, and DFU options remain available as board menu experiments. They must be validated before being made release defaults.
 
