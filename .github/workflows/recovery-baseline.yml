@@ -115,3 +115,33 @@ jobs:
           arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/CompileSmoke
           arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/PSRAM
           arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/DualCore
+
+  published-index-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout NV3047-Core
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install the published 1.0.1 package from the checked-in index
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          INDEX_URL="https://raw.githubusercontent.com/AirysDark/NV3047-Core/core-recovery-v1/package_nv3047_index.json"
+
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls "$INDEX_URL"
+          arduino-cli core update-index
+          arduino-cli core install "NV3047-Core:esp32@1.0.1"
+
+          arduino-cli board listall | \
+            grep -F "NV3047 High-Priority HMI Board"
+
+          arduino-cli compile --warnings all \
+            --fqbn "NV3047-Core:esp32:nv3047" \
+            tests/sketches/CompileSmoke
