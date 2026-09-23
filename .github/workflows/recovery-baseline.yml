@@ -1,0 +1,66 @@
+name: Recovery Baseline
+
+on:
+  push:
+    branches:
+      - core-recovery-v1
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout NV3047-Core
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install Arduino-ESP32 2.0.17 tool dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          arduino-cli config init --overwrite
+          arduino-cli config add board_manager.additional_urls             https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32@2.0.17
+
+      - name: Stage NV3047 platform as a local hardware package
+        shell: bash
+        run: |
+          set -euo pipefail
+          PLATFORM_DIR="$HOME/Arduino/hardware/nv3047/esp32"
+          mkdir -p "$PLATFORM_DIR"
+          rsync -a             --exclude '.git'             --exclude '.github'             ./ "$PLATFORM_DIR/"
+
+      - name: Verify board registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          arduino-cli board listall | grep -F "NV3047 High-Priority HMI Board"
+
+      - name: Compile smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          FQBN="nv3047:esp32:nv3047"
+
+          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/CompileSmoke
+
+          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/PSRAM
+
+          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/DualCore
+
+      - name: Assert recovered board invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '^nv3047.build.mcu=esp32s3$' boards.txt
+          grep -q '^nv3047.build.variant=NV3047$' boards.txt
+          grep -q '^nv3047.build.board=NV3047$' boards.txt
+          ! grep -q 'nv3047.build.extra_flags=.*CONFIG_' boards.txt
+          grep -q 'static const int8_t SDA = -1;' variants/NV3047/pins_arduino.h
+          grep -q 'static const int8_t SCL = -1;' variants/NV3047/pins_arduino.h
