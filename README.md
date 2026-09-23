@@ -35,6 +35,26 @@ The original July 2026 repository was an unfinished custom-core experiment. The 
 
 See [docs/RECOVERY_AUDIT.md](docs/RECOVERY_AUDIT.md) for the detailed audit.
 
+## Arduino IDE Board Manager installation
+
+The recovery baseline is published as prerelease **NV3047-Core 1.0.1**.
+
+Add this single URL to **Arduino IDE > Preferences > Additional Boards Manager URLs**:
+
+```text
+https://raw.githubusercontent.com/AirysDark/NV3047-Core/main/package_nv3047_index.json
+```
+
+Then open Boards Manager, search for `NV3047`, install **NV3047 ESP32-S3 HMI Core**, and select:
+
+```text
+NV3047 High-Priority HMI Board
+```
+
+The NV3047 package index carries the exact Espressif ESP32-S3 compiler, debugger, OpenOCD, esptool, mkspiffs, and mklittlefs tool definitions required by the 2.0.17-based core. A separate Espressif Additional Boards Manager URL is not required.
+
+The current 1.0.1 release is intentionally marked prerelease until the package has completed physical-panel upload, RGB, touch, and PSRAM validation.
+
 ## Supported baseline
 
 | Item | Baseline |
@@ -315,8 +335,8 @@ Before publishing a Board Manager version:
 ## Known limitations
 
 - The recovery baseline still uses the stock precompiled ESP32-S3 SDK.
-- The legacy `tools/sdk/MV3047` duplicate has not yet been removed.
-- The Board Manager index/release archive is still being rebuilt.
+- The legacy `tools/sdk/MV3047` duplicate has been removed after its configuration intent was documented.
+- Board Manager packaging is reproducible and the 1.0.1 prerelease is published; physical-panel validation is still required before stable release.
 - OPI PSRAM and non-default flash sizes require hardware verification.
 - The historical QIO/DIO flash profile is preserved pending panel testing.
 - LoRaWAN menu metadata is retained but is not part of the current display-core validation scope.

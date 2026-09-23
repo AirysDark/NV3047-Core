@@ -201,7 +201,7 @@ The old tag package metadata used a placeholder archive URL. Recovered main chan
 
 The dependency set also diverges from the official 2.0.17 platform dependency set.
 
-Conclusion: `package_nv3047_index.json` must be generated from a real release artifact and validated; it should not be patched with guessed checksum/size values.
+Recovery result: the package index is now generated from a deterministic release archive, including its exact SHA-256 and byte size. The 1.0.1 prerelease archive was produced by the release workflow and is referenced by the checked-in package index.
 
 ## Recovery baseline changes
 
@@ -217,7 +217,7 @@ The `core-recovery-v1` branch intentionally limits first-stage changes to:
 - CI;
 - documentation.
 
-No precompiled ESP-IDF library is changed in this phase.
+No precompiled ESP-IDF library is changed in this phase. The disconnected `tools/sdk/MV3047` duplicate was removed after the audit because its only unique content was the hand-edited sdkconfig intent already captured in this document and Git history.
 
 ## Next technical phase
 
