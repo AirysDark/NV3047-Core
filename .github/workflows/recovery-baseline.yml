@@ -48,7 +48,7 @@ jobs:
           set -euo pipefail
           FQBN="nv3047:esp32:nv3047"
 
-          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/PublishedPackageSmoke
+          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/CompileSmoke
 
           arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/PSRAM
 
@@ -144,4 +144,4 @@ jobs:
 
           arduino-cli compile --warnings all \
             --fqbn "NV3047-Core:esp32:nv3047" \
-            tests/sketches/CompileSmoke
+            tests/sketches/PublishedPackageSmoke
