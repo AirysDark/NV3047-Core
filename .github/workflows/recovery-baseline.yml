@@ -132,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          INDEX_URL="https://raw.githubusercontent.com/AirysDark/NV3047-Core/core-recovery-v1/package_nv3047_index.json"
+          INDEX_URL="https://raw.githubusercontent.com/AirysDark/NV3047-Core/main/package_nv3047_index.json"
 
           arduino-cli config init --overwrite
           arduino-cli config add board_manager.additional_urls "$INDEX_URL"
@@ -144,4 +144,4 @@ jobs:
 
           arduino-cli compile --warnings all \
             --fqbn "NV3047-Core:esp32:nv3047" \
-            tests/sketches/CompileSmoke
+            tests/sketches/PublishedPackageSmoke

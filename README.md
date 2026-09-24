@@ -78,6 +78,8 @@ The 8 MB/16 MB flash and OPI PSRAM menu entries are hardware options and must be
 
 ## Verified board pins
 
+**Pin-map authority:** `NV3047_drivers` is the source of truth for physical board wiring. NV3047-Core mirrors that verified map in `variants/NV3047/pins_arduino.h` so board-level sketches and CI can use safe `NV3047_PIN_*` constants. Driver timing, colour packing, touch calibration, SPI transaction behaviour, and panel initialization remain owned by `NV3047_drivers`.
+
 ### Debug UART
 
 | Signal | GPIO |
@@ -98,11 +100,25 @@ The verified debug path is `Serial0` at 115200 baud using RX 44 / TX 43. The rec
 | Touch CS | 0 |
 | Touch IRQ | 36 |
 
-The Arduino variant exposes the verified generic SPI defaults as SCK/MOSI/MISO/SS = 12/11/13/10. Touch-specific CS/IRQ remain the responsibility of the display/touch driver.
+The Arduino variant exposes the verified generic SPI defaults as SCK/MOSI/MISO/SS = 12/11/13/10. It also mirrors touch and SD pins as `NV3047_PIN_TOUCH_*` and `NV3047_PIN_SD_*` constants. The driver remains responsible for configuring and operating those peripherals.
+
+### Expansion / silkscreen pins
+
+| Function | GPIO |
+| --- | ---: |
+| UART1 RX | 18 |
+| UART1 TX | 17 |
+| GPIO D0 | 38 |
+| GPIO D1 | 37 |
+| I2S LRCLK | 19 |
+| I2S BCLK | 35 |
+| I2S SDIN | 20 |
+
+These are mirrored in the Core as `NV3047_PIN_UART1_*`, `NV3047_PIN_GPIO_D*`, and `NV3047_PIN_I2S_*`.
 
 ### RGB display
 
-The current driver project is authoritative for display timing, colour packing, touch calibration, and panel mapping. The currently verified RGB wiring is:
+The current driver project is authoritative for display timing, colour packing, touch calibration, and panel mapping. The Core mirrors the verified physical RGB wiring as `NV3047_PIN_RGB_*` and `NV3047_PIN_BACKLIGHT` constants:
 
 | Function | GPIO |
 | --- | --- |
@@ -281,6 +297,9 @@ The baseline CI checks:
 - dedicated NV3047 variant selection;
 - UART pin constants;
 - safe I2C defaults;
+- complete RGB/display pin-map constants;
+- touch and SD/TF pin-map constants;
+- expansion UART/GPIO/I2S pin-map constants;
 - SPI pin constants and ESP-IDF SPI2 host availability;
 - PSRAM APIs;
 - heap/memory statistics APIs;
