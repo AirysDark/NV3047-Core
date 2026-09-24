@@ -1,0 +1,56 @@
+name: SDK Rebuild Reproduction
+
+on:
+  push:
+    branches:
+      - sdk-rebuild-v1
+  pull_request:
+    paths:
+      - "scripts/sdk/**"
+      - "docs/SDK_REBUILD_V1.md"
+      - ".github/workflows/sdk-rebuild.yml"
+      - "tools/sdk/esp32s3/**"
+  workflow_dispatch:
+
+jobs:
+  reproduce-stock-esp32s3:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout NV3047-Core
+        uses: actions/checkout@v4
+
+      - name: Install historical builder dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            git wget curl libssl-dev libncurses-dev flex bison gperf \
+            cmake ninja-build ccache jq python3 python3-pip patch
+
+      - name: Rebuild stock Arduino-ESP32 2.0.17 ESP32-S3 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/sdk/rebuild_stock_esp32s3.sh "$RUNNER_TEMP/nv3047-sdk-rebuild"
+
+      - name: Compare rebuilt SDK with shipped baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/sdk/compare_sdk.py \
+            tools/sdk/esp32s3 \
+            "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/out/tools/sdk/esp32s3" \
+            --json "$RUNNER_TEMP/sdk-compare.json"
+
+          echo "=== Recorded rebuilt component versions ==="
+          cat "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/out/tools/sdk/versions.txt"
+
+      - name: Upload reproduction report
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32s3-sdk-reproduction-report
+          path: ${{ runner.temp }}/sdk-compare.json
+          retention-days: 14
