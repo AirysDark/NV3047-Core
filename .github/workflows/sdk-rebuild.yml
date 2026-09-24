@@ -16,6 +16,11 @@ jobs:
   reproduce-stock-esp32s3:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
+    env:
+      # The 2024 Espressif lib-builder workflow used the normal GitHub checkout
+      # layout. Stock Arduino-ESP32 2.0.17 archives retain this absolute prefix
+      # in DWARF/debug data, so V3 recreates it exactly.
+      HISTORICAL_WORK_ROOT: /home/runner/work/esp32-arduino-lib-builder
 
     steps:
       - name: Checkout NV3047-Core
@@ -34,23 +39,52 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          scripts/sdk/rebuild_stock_esp32s3.sh "$RUNNER_TEMP/nv3047-sdk-rebuild"
+          rm -rf "$HISTORICAL_WORK_ROOT"
+          scripts/sdk/rebuild_stock_esp32s3.sh "$HISTORICAL_WORK_ROOT"
+
+          BUILDER="$HISTORICAL_WORK_ROOT/esp32-arduino-lib-builder"
+          test "$BUILDER" = "/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder"
 
       - name: Compare rebuilt SDK with shipped baseline
         shell: bash
         run: |
           set -euo pipefail
+
+          BUILDER="$HISTORICAL_WORK_ROOT/esp32-arduino-lib-builder"
+          REBUILT="$BUILDER/out/tools/sdk/esp32s3"
+
           python3 scripts/sdk/compare_sdk.py \
             tools/sdk/esp32s3 \
-            "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/out/tools/sdk/esp32s3" \
+            "$REBUILT" \
             --json "$RUNNER_TEMP/sdk-compare.json"
 
           echo "=== Recorded rebuilt component versions ==="
-          cat "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/out/tools/sdk/versions.txt"
+          cat "$BUILDER/out/tools/sdk/versions.txt"
 
           echo "=== Secure-cert source check ==="
-          git -C "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/components/espressif__esp_secure_cert_mgr" \
+          git -C "$BUILDER/components/espressif__esp_secure_cert_mgr" \
             log -1 --format='%H %s'
+
+          echo "=== Historical workspace check ==="
+          strings "$REBUILT/lib/libcmock.a" | \
+            grep -F "/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder" | \
+            head -n 3
+
+      - name: Collect generated-text diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REBUILT="$HISTORICAL_WORK_ROOT/esp32-arduino-lib-builder/out/tools/sdk/esp32s3"
+          DIAG="$RUNNER_TEMP/rebuild-diagnostics"
+          mkdir -p "$DIAG"
+          cp "$REBUILT/sdkconfig" "$DIAG/sdkconfig"
+
+          for variant in qio_qspi qio_opi dio_qspi dio_opi opi_qspi opi_opi; do
+            mkdir -p "$DIAG/$variant/include"
+            cp "$REBUILT/$variant/include/sdkconfig.h" "$DIAG/$variant/include/sdkconfig.h"
+            cp "$REBUILT/$variant/sections.ld" "$DIAG/$variant/sections.ld"
+          done
 
       - name: Upload reproduction report
         uses: actions/upload-artifact@v4
@@ -58,6 +92,7 @@ jobs:
           name: esp32s3-sdk-reproduction-report
           path: |
             ${{ runner.temp }}/sdk-compare.json
-            ${{ runner.temp }}/nv3047-sdk-rebuild/esp32-arduino-lib-builder/dependencies.lock
+            ${{ runner.temp }}/rebuild-diagnostics
+            /home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder/dependencies.lock
           if-no-files-found: ignore
           retention-days: 14
