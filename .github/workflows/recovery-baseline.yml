@@ -48,7 +48,7 @@ jobs:
           set -euo pipefail
           FQBN="nv3047:esp32:nv3047"
 
-          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/CompileSmoke
+          arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/PublishedPackageSmoke
 
           arduino-cli compile --warnings all --fqbn "$FQBN"             tests/sketches/PSRAM
 
@@ -132,7 +132,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          INDEX_URL="https://raw.githubusercontent.com/AirysDark/NV3047-Core/core-recovery-v1/package_nv3047_index.json"
+          INDEX_URL="https://raw.githubusercontent.com/AirysDark/NV3047-Core/main/package_nv3047_index.json"
 
           arduino-cli config init --overwrite
           arduino-cli config add board_manager.additional_urls "$INDEX_URL"
