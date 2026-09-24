@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Rebuild the stock Arduino-ESP32 2.0.17 ESP32-S3 SDK from the exact component
-# revisions recorded in tools/sdk/versions.txt.
+# revisions recovered from the shipped SDK and historical build metadata.
 #
 # This script intentionally performs NO NV3047 optimization. Its first job is
 # provenance/reproducibility: reproduce the stock SDK before changing sdkconfig.
@@ -45,6 +45,13 @@ DSP_COMMIT="9b4a8b42b98f2f7cd614e47bb4d159acbe500bee"
 
 TINYUSB_REPO="https://github.com/hathach/tinyusb.git"
 TINYUSB_COMMIT="a0e5626bc50d484a23f33000c48082179f0cc2dd"
+
+# esp-rainmaker's historical manifest uses a floating ^2.2.1 dependency.
+# Rebuilding in 2026 resolved that to esp_secure_cert_mgr 2.9.3, which is not
+# what shipped in Arduino-ESP32 2.0.17. The four public headers in the shipped
+# SDK are byte-for-byte identical to this v2.4.1 release commit.
+SECURE_CERT_REPO="https://github.com/espressif/esp_secure_cert_mgr.git"
+SECURE_CERT_COMMIT="ff3a51e9efe0436408ddc0ea9e486fee5d1d916e"
 
 clone_reset_master() {
     local url="$1"
@@ -89,14 +96,24 @@ git -C "$BUILDER/components/arduino" submodule update --init --recursive
 
 echo
 echo "== Clone exact auxiliary component revisions =="
-clone_reset_master "$CAMERA_REPO"     "$BUILDER/components/esp32-camera" "$CAMERA_COMMIT"
-clone_reset_master "$ESP_DL_REPO"     "$BUILDER/components/esp-dl" "$ESP_DL_COMMIT"
-clone_reset_master "$LITTLEFS_REPO"     "$BUILDER/components/esp_littlefs" "$LITTLEFS_COMMIT"
-clone_reset_master "$RAINMAKER_REPO"     "$BUILDER/components/esp-rainmaker" "$RAINMAKER_COMMIT"
-clone_reset_master "$DSP_REPO"     "$BUILDER/components/espressif__esp-dsp" "$DSP_COMMIT"
+clone_reset_master "$CAMERA_REPO" "$BUILDER/components/esp32-camera" "$CAMERA_COMMIT"
+clone_reset_master "$ESP_DL_REPO" "$BUILDER/components/esp-dl" "$ESP_DL_COMMIT"
+clone_reset_master "$LITTLEFS_REPO" "$BUILDER/components/esp_littlefs" "$LITTLEFS_COMMIT"
+clone_reset_master "$RAINMAKER_REPO" "$BUILDER/components/esp-rainmaker" "$RAINMAKER_COMMIT"
+clone_reset_master "$DSP_REPO" "$BUILDER/components/espressif__esp-dsp" "$DSP_COMMIT"
+
+# Force the historical RainMaker transitive dependency to the exact source
+# generation present in the shipped 2.0.17 SDK. A local project component has
+# precedence over an IDF Component Manager download.
+clone_reset_master "$SECURE_CERT_REPO"     "$BUILDER/components/espressif__esp_secure_cert_mgr"     "$SECURE_CERT_COMMIT"
 
 rm -rf "$BUILDER/components/arduino_tinyusb/tinyusb"
-clone_reset_master "$TINYUSB_REPO"     "$BUILDER/components/arduino_tinyusb/tinyusb" "$TINYUSB_COMMIT"
+clone_reset_master "$TINYUSB_REPO" "$BUILDER/components/arduino_tinyusb/tinyusb" "$TINYUSB_COMMIT"
+
+echo
+echo "== Verify historical secure-cert source pin =="
+test "$(git -C "$BUILDER/components/espressif__esp_secure_cert_mgr" rev-parse HEAD)" = "$SECURE_CERT_COMMIT"
+grep -q 'version: "2.4.1"'     "$BUILDER/components/espressif__esp_secure_cert_mgr/idf_component.yml"
 
 echo
 echo "== Install/export the exact ESP-IDF tool environment =="
@@ -113,6 +130,14 @@ echo "== Build ESP32-S3 only =="
     ./build.sh -s -t esp32s3
 )
 
+# If this directory exists, Component Manager ignored the local historical
+# override and downloaded another secure-cert generation. Treat that as a
+# reproduction failure rather than silently comparing the wrong source.
+if [[ -d "$BUILDER/managed_components/espressif__esp_secure_cert_mgr" ]]; then
+    echo "ERROR: Component Manager downloaded esp_secure_cert_mgr despite the local v2.4.1 override" >&2
+    exit 1
+fi
+
 OUT="$BUILDER/out/tools/sdk/esp32s3"
 if [[ ! -d "$OUT" ]]; then
     echo "ERROR: expected SDK output was not produced: $OUT" >&2
@@ -122,6 +147,9 @@ fi
 echo
 echo "Stock reproduction output:"
 echo "  $OUT"
+echo
+echo "Pinned secure-cert source:"
+echo "  $SECURE_CERT_COMMIT (v2.4.1)"
 echo
 echo "Recorded output versions:"
 cat "$BUILDER/out/tools/sdk/versions.txt"
