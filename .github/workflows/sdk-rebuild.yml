@@ -3,7 +3,7 @@ name: SDK Rebuild Reproduction
 on:
   push:
     branches:
-      - sdk-rebuild-v1
+      - "sdk-rebuild-v*"
   pull_request:
     paths:
       - "scripts/sdk/**"
@@ -48,9 +48,16 @@ jobs:
           echo "=== Recorded rebuilt component versions ==="
           cat "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/out/tools/sdk/versions.txt"
 
+          echo "=== Secure-cert source check ==="
+          git -C "$RUNNER_TEMP/nv3047-sdk-rebuild/esp32-arduino-lib-builder/components/espressif__esp_secure_cert_mgr" \
+            log -1 --format='%H %s'
+
       - name: Upload reproduction report
         uses: actions/upload-artifact@v4
         with:
           name: esp32s3-sdk-reproduction-report
-          path: ${{ runner.temp }}/sdk-compare.json
+          path: |
+            ${{ runner.temp }}/sdk-compare.json
+            ${{ runner.temp }}/nv3047-sdk-rebuild/esp32-arduino-lib-builder/dependencies.lock
+          if-no-files-found: ignore
           retention-days: 14
