@@ -122,6 +122,49 @@ The goal is to distinguish:
 - toolchain-generated but functionally equivalent differences;
 - genuine SDK/library differences.
 
+## Reproduction V1 result and transitive dependency drift
+
+The first successful rebuild completed with all top-level recorded revisions
+matching, but the SDK tree was not byte-identical:
+
+```text
+baseline files: 2387
+rebuilt files:  2391
+same:           2247
+changed:        140
+missing:        0
+extra:          4
+```
+
+The largest genuine source mismatch was identified in RainMaker's managed
+`espressif/esp_secure_cert_mgr` dependency. The pinned historical RainMaker
+commit declares:
+
+```yaml
+espressif/esp_secure_cert_mgr:
+  version: "^2.2.1"
+```
+
+That range resolved to **2.9.3** when the historical builder was rerun in
+September 2026. The shipped Arduino-ESP32 2.0.17 SDK does not contain that
+source generation.
+
+The four public secure-cert headers shipped in `tools/sdk/esp32s3` have Git
+blob hashes that exactly match Espressif commit:
+
+```text
+ff3a51e9efe0436408ddc0ea9e486fee5d1d916e
+```
+
+That commit is the upstream **v2.4.1** release. The rebuild therefore pins this
+exact source as a local component, which takes precedence over the floating
+managed dependency. The script fails if a managed secure-cert copy is still
+downloaded, preventing silent dependency substitution.
+
+V2 intentionally changes no NV3047 performance settings. Its sole purpose is
+to remove this confirmed source drift and measure how much of the remaining
+SDK difference is build/tool metadata versus additional provenance drift.
+
 ## IRAM experiment sequence after reproduction
 
 Only after the stock rebuild is understood should experiments be introduced,
