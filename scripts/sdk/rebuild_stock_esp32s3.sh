@@ -103,9 +103,39 @@ clone_reset_master "$RAINMAKER_REPO" "$BUILDER/components/esp-rainmaker" "$RAINM
 clone_reset_master "$DSP_REPO" "$BUILDER/components/espressif__esp-dsp" "$DSP_COMMIT"
 
 # Force the historical RainMaker transitive dependency to the exact source
-# generation present in the shipped 2.0.17 SDK. A local project component has
-# precedence over an IDF Component Manager download.
-clone_reset_master "$SECURE_CERT_REPO"     "$BUILDER/components/espressif__esp_secure_cert_mgr"     "$SECURE_CERT_COMMIT"
+# generation present in the shipped 2.0.17 SDK.
+clone_reset_master "$SECURE_CERT_REPO" \
+    "$BUILDER/components/espressif__esp_secure_cert_mgr" \
+    "$SECURE_CERT_COMMIT"
+
+# ESP-IDF 4.4 Component Manager resolves every dependency declared in a
+# component manifest. Merely cloning a same-named project component is not
+# sufficient to stop RainMaker's historical ^2.2.1 range from resolving to a
+# modern registry release. Rewrite only this dependency to the pinned local
+# source while preserving its original IDF-version rule.
+RAINMAKER_MANIFEST="$BUILDER/components/esp-rainmaker/components/esp_rainmaker/idf_component.yml"
+python3 - "$RAINMAKER_MANIFEST" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+old = """  espressif/esp_secure_cert_mgr:
+    version: "^2.2.1"
+    rules:
+      - if: "idf_version >=4.3"
+"""
+new = """  espressif/esp_secure_cert_mgr:
+    path: ../../../espressif__esp_secure_cert_mgr
+    rules:
+      - if: "idf_version >=4.3"
+"""
+if old not in text:
+    raise SystemExit("RainMaker secure-cert dependency block did not match the pinned historical source")
+path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+
+grep -q 'path: ../../../espressif__esp_secure_cert_mgr' "$RAINMAKER_MANIFEST"
 
 rm -rf "$BUILDER/components/arduino_tinyusb/tinyusb"
 clone_reset_master "$TINYUSB_REPO" "$BUILDER/components/arduino_tinyusb/tinyusb" "$TINYUSB_COMMIT"
@@ -130,11 +160,11 @@ echo "== Build ESP32-S3 only =="
     ./build.sh -s -t esp32s3
 )
 
-# If this directory exists, Component Manager ignored the local historical
-# override and downloaded another secure-cert generation. Treat that as a
-# reproduction failure rather than silently comparing the wrong source.
+# The RainMaker manifest now explicitly points to the local historical source.
+# A registry-managed secure-cert directory therefore means the dependency pin
+# was not honored and the reproduction is invalid.
 if [[ -d "$BUILDER/managed_components/espressif__esp_secure_cert_mgr" ]]; then
-    echo "ERROR: Component Manager downloaded esp_secure_cert_mgr despite the local v2.4.1 override" >&2
+    echo "ERROR: Component Manager downloaded esp_secure_cert_mgr despite the pinned local-path dependency" >&2
     exit 1
 fi
 
