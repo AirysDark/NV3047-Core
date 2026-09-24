@@ -66,9 +66,10 @@ jobs:
             log -1 --format='%H %s'
 
           echo "=== Historical workspace check ==="
-          strings "$REBUILT/lib/libcmock.a" | \
-            grep -F "/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder" | \
-            head -n 3
+          strings "$REBUILT/lib/libcmock.a" > "$RUNNER_TEMP/libcmock.strings"
+          grep -F "/home/runner/work/esp32-arduino-lib-builder/esp32-arduino-lib-builder" \
+            "$RUNNER_TEMP/libcmock.strings" > "$RUNNER_TEMP/libcmock-path-matches.txt"
+          sed -n '1,3p' "$RUNNER_TEMP/libcmock-path-matches.txt"
 
       - name: Collect generated-text diagnostics
         shell: bash
