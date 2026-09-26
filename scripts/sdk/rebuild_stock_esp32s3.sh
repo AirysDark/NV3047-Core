@@ -181,6 +181,15 @@ if [[ ! -d "$OUT" ]]; then
     exit 1
 fi
 
+# Official Arduino-ESP32 2.0.17 omits this internal lwIP debug header from its
+# packaged ESP32-S3 SDK even though the pinned ESP-IDF source tree contains it.
+# The historical lib-builder harvest currently includes it, so remove only this
+# verified package-only extra to reproduce the published 2.0.17 tree.
+LWIP_DEBUG_HEADER="$OUT/include/lwip/port/esp32/include/debug/lwip_debug.h"
+if [[ -f "$LWIP_DEBUG_HEADER" ]]; then
+    rm -f "$LWIP_DEBUG_HEADER"
+fi
+
 echo
 echo "Stock reproduction output:"
 echo "  $OUT"
