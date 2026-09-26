@@ -18,7 +18,7 @@ WORKDIR="${1:-$REPO_ROOT/.sdk-rebuild}"
 BUILDER="$WORKDIR/esp32-arduino-lib-builder"
 
 LIB_BUILDER_REPO="https://github.com/espressif/esp32-arduino-lib-builder.git"
-LIB_BUILDER_COMMIT="3eb9cb06afb534d37f47e98bca9f45e99126f81a"
+LIB_BUILDER_COMMIT="956a355d51e7f4c3a454e193a9c28fcf321a452f"
 
 IDF_REPO="https://github.com/espressif/esp-idf.git"
 IDF_TAG="v4.4.7"
