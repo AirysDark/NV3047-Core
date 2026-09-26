@@ -21,6 +21,9 @@ jobs:
       # layout. Stock Arduino-ESP32 2.0.17 archives retain this absolute prefix
       # in DWARF/debug data, so V3 recreates it exactly.
       HISTORICAL_WORK_ROOT: /home/runner/work/esp32-arduino-lib-builder
+      # Stock libapp_update.a embeds Mar 5 2024 12:12:53 via __DATE__/__TIME__.
+      # GCC uses SOURCE_DATE_EPOCH to make those built-in macros reproducible.
+      SOURCE_DATE_EPOCH: "1709640773"
 
     steps:
       - name: Checkout NV3047-Core
