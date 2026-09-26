@@ -153,6 +153,21 @@ source "$BUILDER/esp-idf/export.sh"
 
 export IDF_PATH="$BUILDER/esp-idf"
 
+# Recreate the variables set by the historical install-esp-idf.sh helper.
+# build.sh -s skips that helper, so without these exports the generated
+# memory-variant sdkconfig.h files record an empty commit and the lib-builder
+# branch name instead of the ESP-IDF provenance shipped in Arduino-ESP32 2.0.17.
+export IDF_COMMIT="$(git -C "$IDF_PATH" rev-parse --short HEAD)"
+export IDF_BRANCH="$(git -C "$IDF_PATH" symbolic-ref --short HEAD 2>/dev/null || git -C "$IDF_PATH" tag --points-at HEAD | head -n1)"
+
+test "$IDF_COMMIT" = "38eeba213a"
+test "$IDF_BRANCH" = "v4.4.7"
+
+echo
+echo "== Historical ESP-IDF provenance variables =="
+echo "IDF_COMMIT=$IDF_COMMIT"
+echo "IDF_BRANCH=$IDF_BRANCH"
+
 echo
 echo "== Build ESP32-S3 only =="
 (
