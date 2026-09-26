@@ -22,7 +22,7 @@ LIB_BUILDER_COMMIT="956a355d51e7f4c3a454e193a9c28fcf321a452f"
 
 IDF_REPO="https://github.com/espressif/esp-idf.git"
 IDF_TAG="v4.4.7"
-IDF_COMMIT="38eeba213aa695aabfd6d89aa9f5078dbe5a94c3"
+IDF_COMMIT_FULL="38eeba213aa695aabfd6d89aa9f5078dbe5a94c3"
 
 ARDUINO_REPO="https://github.com/espressif/arduino-esp32.git"
 ARDUINO_BRANCH_LABEL="idf-38eeba213a"
@@ -77,7 +77,7 @@ git -C "$BUILDER" checkout --detach "$LIB_BUILDER_COMMIT"
 echo
 echo "== Clone exact ESP-IDF v4.4.7 revision =="
 git clone --branch "$IDF_TAG" --recursive "$IDF_REPO" "$BUILDER/esp-idf"
-git -C "$BUILDER/esp-idf" reset --hard "$IDF_COMMIT"
+git -C "$BUILDER/esp-idf" reset --hard "$IDF_COMMIT_FULL"
 git -C "$BUILDER/esp-idf" submodule update --init --recursive
 
 echo
@@ -144,11 +144,17 @@ export IDF_PATH="$BUILDER/esp-idf"
 # build.sh -s skips that helper, so without these exports the generated
 # memory-variant sdkconfig.h files record an empty commit and the lib-builder
 # branch name instead of the ESP-IDF provenance shipped in Arduino-ESP32 2.0.17.
-export IDF_COMMIT="$(git -C "$IDF_PATH" rev-parse --short HEAD)"
-export IDF_BRANCH="$(git -C "$IDF_PATH" symbolic-ref --short HEAD 2>/dev/null || git -C "$IDF_PATH" tag --points-at HEAD | head -n1)"
+ACTUAL_IDF_COMMIT="$(git -C "$IDF_PATH" rev-parse HEAD)"
+test "$ACTUAL_IDF_COMMIT" = "$IDF_COMMIT_FULL"
 
+# Arduino-ESP32 2.0.17 records the historical 10-character abbreviation.
+# Modern Git chooses 11 characters for this repository, so do not use
+# rev-parse --short here; derive the exact recorded width deterministically.
+export IDF_COMMIT="${ACTUAL_IDF_COMMIT:0:10}"
+export IDF_BRANCH="v4.4.7"
+
+test "$(git -C "$IDF_PATH" rev-parse 'v4.4.7^{commit}')" = "$IDF_COMMIT_FULL"
 test "$IDF_COMMIT" = "38eeba213a"
-test "$IDF_BRANCH" = "v4.4.7"
 
 echo
 echo "== Historical ESP-IDF provenance variables =="
