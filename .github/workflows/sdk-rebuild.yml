@@ -61,9 +61,9 @@ jobs:
           echo "=== Recorded rebuilt component versions ==="
           cat "$BUILDER/out/tools/sdk/versions.txt"
 
-          echo "=== Secure-cert source check ==="
-          git -C "$BUILDER/components/espressif__esp_secure_cert_mgr" \
-            log -1 --format='%H %s'
+          echo "=== Secure-cert managed dependency check ==="
+          grep -A8 '^  espressif/esp_secure_cert_mgr:' "$BUILDER/dependencies.lock"
+          grep '^version:' "$BUILDER/managed_components/espressif__esp_secure_cert_mgr/idf_component.yml"
 
           echo "=== Historical workspace check ==="
           strings "$REBUILT/lib/libcmock.a" > "$RUNNER_TEMP/libcmock.strings"
