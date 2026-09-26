@@ -138,6 +138,16 @@ echo "== Install/export the exact ESP-IDF tool environment =="
 # shellcheck disable=SC1091
 source "$BUILDER/esp-idf/export.sh"
 
+# ESP-IDF 4.4 allows idf-component-manager ~=1.2. On the recovered stock SDK
+# build date (2024-03-05), 1.5.2 was the latest published compatible release.
+# Pin it here so component resolution/order is not affected by the later 1.5.3.
+python -m pip install --disable-pip-version-check --quiet "idf-component-manager==1.5.2"
+python - <<'PY'
+from importlib.metadata import version
+assert version("idf-component-manager") == "1.5.2"
+print("idf-component-manager:", version("idf-component-manager"))
+PY
+
 export IDF_PATH="$BUILDER/esp-idf"
 
 # Recreate the variables set by the historical install-esp-idf.sh helper.
