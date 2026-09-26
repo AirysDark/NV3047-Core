@@ -182,8 +182,42 @@ echo "== Build ESP32-S3 only =="
 # into the same managed_components location embedded by the stock SDK.
 SECURE_CERT_DIR="$BUILDER/managed_components/espressif__esp_secure_cert_mgr"
 test -d "$SECURE_CERT_DIR"
-grep -q 'version: "2.4.1"' "$SECURE_CERT_DIR/idf_component.yml"
-grep -A8 '^  espressif/esp_secure_cert_mgr:' "$BUILDER/dependencies.lock" | grep -q 'version: 2.4.1'
+grep -Eq '^version:[[:space:]]*"?2\.4\.1"?[[:space:]]*
+OUT="$BUILDER/out/tools/sdk/esp32s3"
+if [[ ! -d "$OUT" ]]; then
+    echo "ERROR: expected SDK output was not produced: $OUT" >&2
+    exit 1
+fi
+
+# Official Arduino-ESP32 2.0.17 omits this internal lwIP debug header from its
+# packaged ESP32-S3 SDK even though the pinned ESP-IDF source tree contains it.
+# The historical lib-builder harvest currently includes it, so remove only this
+# verified package-only extra to reproduce the published 2.0.17 tree.
+LWIP_DEBUG_HEADER="$OUT/include/lwip/port/esp32/include/debug/lwip_debug.h"
+if [[ -f "$LWIP_DEBUG_HEADER" ]]; then
+    rm -f "$LWIP_DEBUG_HEADER"
+fi
+
+echo
+echo "Stock reproduction output:"
+echo "  $OUT"
+echo
+echo "Pinned managed secure-cert:"
+echo "  $SECURE_CERT_VERSION"
+echo
+echo "Recorded output versions:"
+cat "$BUILDER/out/tools/sdk/versions.txt"
+ \
+    "$SECURE_CERT_DIR/idf_component.yml"
+
+SECURE_CERT_LOCK_BLOCK="$WORKDIR/secure-cert-lock-block.txt"
+grep -A8 '^  espressif/esp_secure_cert_mgr:' "$BUILDER/dependencies.lock" \
+    > "$SECURE_CERT_LOCK_BLOCK"
+grep -q 'version: 2.4.1' "$SECURE_CERT_LOCK_BLOCK"
+
+echo
+echo "== Verified managed secure-cert dependency =="
+cat "$SECURE_CERT_LOCK_BLOCK"
 
 OUT="$BUILDER/out/tools/sdk/esp32s3"
 if [[ ! -d "$OUT" ]]; then
