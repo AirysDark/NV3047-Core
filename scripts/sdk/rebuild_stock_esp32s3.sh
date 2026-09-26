@@ -47,11 +47,10 @@ TINYUSB_REPO="https://github.com/hathach/tinyusb.git"
 TINYUSB_COMMIT="a0e5626bc50d484a23f33000c48082179f0cc2dd"
 
 # esp-rainmaker's historical manifest uses a floating ^2.2.1 dependency.
-# Rebuilding in 2026 resolved that to esp_secure_cert_mgr 2.9.3, which is not
-# what shipped in Arduino-ESP32 2.0.17. The four public headers in the shipped
-# SDK are byte-for-byte identical to this v2.4.1 release commit.
-SECURE_CERT_REPO="https://github.com/espressif/esp_secure_cert_mgr.git"
-SECURE_CERT_COMMIT="ff3a51e9efe0436408ddc0ea9e486fee5d1d916e"
+# Rebuilding in 2026 resolves that to a modern release, while the shipped
+# Arduino-ESP32 2.0.17 SDK is the 2.4.1 generation. V6 keeps the component
+# managed (matching the stock build path) but pins the exact historical version.
+SECURE_CERT_VERSION="2.4.1"
 
 clone_reset_master() {
     local url="$1"
@@ -102,31 +101,24 @@ clone_reset_master "$LITTLEFS_REPO" "$BUILDER/components/esp_littlefs" "$LITTLEF
 clone_reset_master "$RAINMAKER_REPO" "$BUILDER/components/esp-rainmaker" "$RAINMAKER_COMMIT"
 clone_reset_master "$DSP_REPO" "$BUILDER/components/espressif__esp-dsp" "$DSP_COMMIT"
 
-# Force the historical RainMaker transitive dependency to the exact source
-# generation present in the shipped 2.0.17 SDK.
-clone_reset_master "$SECURE_CERT_REPO" \
-    "$BUILDER/components/espressif__esp_secure_cert_mgr" \
-    "$SECURE_CERT_COMMIT"
-
-# ESP-IDF 4.4 Component Manager resolves every dependency declared in a
-# component manifest. Merely cloning a same-named project component is not
-# sufficient to stop RainMaker's historical ^2.2.1 range from resolving to a
-# modern registry release. Rewrite only this dependency to the pinned local
-# source while preserving its original IDF-version rule.
+# Pin the historical RainMaker transitive dependency without changing its
+# component-manager layout. A plain semantic version is an exact match in the
+# IDF Component Manager SimpleSpec grammar.
 RAINMAKER_MANIFEST="$BUILDER/components/esp-rainmaker/components/esp_rainmaker/idf_component.yml"
-python3 - "$RAINMAKER_MANIFEST" <<'PY'
+python3 - "$RAINMAKER_MANIFEST" "$SECURE_CERT_VERSION" <<'PY'
 from pathlib import Path
 import sys
 
 path = Path(sys.argv[1])
+version = sys.argv[2]
 text = path.read_text(encoding="utf-8")
 old = """  espressif/esp_secure_cert_mgr:
     version: "^2.2.1"
     rules:
       - if: "idf_version >=4.3"
 """
-new = """  espressif/esp_secure_cert_mgr:
-    path: ../../../espressif__esp_secure_cert_mgr
+new = f"""  espressif/esp_secure_cert_mgr:
+    version: "{version}"
     rules:
       - if: "idf_version >=4.3"
 """
@@ -135,15 +127,10 @@ if old not in text:
 path.write_text(text.replace(old, new, 1), encoding="utf-8")
 PY
 
-grep -q 'path: ../../../espressif__esp_secure_cert_mgr' "$RAINMAKER_MANIFEST"
+grep -q 'version: "2.4.1"' "$RAINMAKER_MANIFEST"
 
 rm -rf "$BUILDER/components/arduino_tinyusb/tinyusb"
 clone_reset_master "$TINYUSB_REPO" "$BUILDER/components/arduino_tinyusb/tinyusb" "$TINYUSB_COMMIT"
-
-echo
-echo "== Verify historical secure-cert source pin =="
-test "$(git -C "$BUILDER/components/espressif__esp_secure_cert_mgr" rev-parse HEAD)" = "$SECURE_CERT_COMMIT"
-grep -q 'version: "2.4.1"'     "$BUILDER/components/espressif__esp_secure_cert_mgr/idf_component.yml"
 
 echo
 echo "== Install/export the exact ESP-IDF tool environment =="
@@ -175,13 +162,12 @@ echo "== Build ESP32-S3 only =="
     ./build.sh -s -t esp32s3
 )
 
-# The RainMaker manifest now explicitly points to the local historical source.
-# A registry-managed secure-cert directory therefore means the dependency pin
-# was not honored and the reproduction is invalid.
-if [[ -d "$BUILDER/managed_components/espressif__esp_secure_cert_mgr" ]]; then
-    echo "ERROR: Component Manager downloaded esp_secure_cert_mgr despite the pinned local-path dependency" >&2
-    exit 1
-fi
+# Verify that Component Manager resolved the exact historical registry release
+# into the same managed_components location embedded by the stock SDK.
+SECURE_CERT_DIR="$BUILDER/managed_components/espressif__esp_secure_cert_mgr"
+test -d "$SECURE_CERT_DIR"
+grep -q 'version: "2.4.1"' "$SECURE_CERT_DIR/idf_component.yml"
+grep -A8 '^  espressif/esp_secure_cert_mgr:' "$BUILDER/dependencies.lock" | grep -q 'version: 2.4.1'
 
 OUT="$BUILDER/out/tools/sdk/esp32s3"
 if [[ ! -d "$OUT" ]]; then
@@ -193,8 +179,8 @@ echo
 echo "Stock reproduction output:"
 echo "  $OUT"
 echo
-echo "Pinned secure-cert source:"
-echo "  $SECURE_CERT_COMMIT (v2.4.1)"
+echo "Pinned managed secure-cert:"
+echo "  $SECURE_CERT_VERSION"
 echo
 echo "Recorded output versions:"
 cat "$BUILDER/out/tools/sdk/versions.txt"
